@@ -4,26 +4,41 @@ from django.contrib.auth.models import AbstractUser
 from PIL import Image
 # Create your models here.
 
-class Employee(models.Model):
-    full_name    = models.CharField(max_length=200)
+def employee_path(instance, filename):
+    return '{0}/{1}'.format(instance.username, filename)
+
+class User(AbstractUser):
+    first_name   = models.CharField(max_length=100)
+    last_name    = models.CharField(max_length=100)
     email        = models.CharField(max_length=100)
+    address      = models.CharField(max_length=100)
     contact      = models.CharField(max_length=100)
-    address      = models.TextField()
-    picture      = models.ImageField(upload_to='uploads/', max_length=255, null=True, blank=True)
 
     username     = models.CharField(max_length=100, unique=True)
     password     = models.CharField(max_length=100, default=1)
 
-    def __str__(self):
-        return self.full_name
+    def get_full_name(self):
+        """
+        Return the first_name plus the last_name, with a space in between.
+        """
+        full_name = "%s %s" % (self.first_name, self.last_name)
+        return full_name.strip()
 
-    def get_image(self):
-        if self.image:
-            return 'http://127.0.0.1:8000' + self.image.url
-        return ''
+    def __str__(self):
+        return self.username
 
     class Meta:
-        db_table = 'employee'
+        db_table = 'users'
+
+class Face(models.Model):
+    user         = models.ForeignKey(User, on_delete=models.CASCADE)
+    picture      = models.ImageField(upload_to=employee_path, max_length=255, null=True, blank=True)
+
+    def get_picture(self):
+        if self.picture:
+            return 'http://127.0.0.1:8000' + self.picture.url
+        return ''
+
 
 class Shift(models.Model):
     name         = models.CharField(max_length=100)
@@ -32,7 +47,7 @@ class Shift(models.Model):
     status       = models.BooleanField(default=True)
     date         = models.DateField(default=None)
 
-    employee     = models.ForeignKey(Employee, on_delete=models.CASCADE, default=True)
+    employee     = models.ForeignKey(User, on_delete=models.CASCADE, default=True)
 
     def __str__(self):
         return self.name

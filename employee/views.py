@@ -24,14 +24,14 @@ from datetime import datetime
 
 # List all Employees
 class EmployeeList(generics.ListAPIView):
-    queryset = Employee.objects.all()
+    queryset = User.objects.all()
     serializer_class = EmployeeSerializer
     # permission_classes = [permissions.IsAuthenticated]
 
 
 # Get detail of Employee 
 class EmployeeDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Employee.objects.all()
+    queryset = User.objects.all()
     serializer_class = EmployeeSerializer
 
 
@@ -98,19 +98,19 @@ class ShiftRange(generics.ListAPIView):
 class LoginAPI(generics.GenericAPIView):
 
     # Define methods
-    model = Employee
+    model = User
     serializer_class = LoginSerializer
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
-            employee = authenticate(
+            user = authenticate(
                 request,
                 username = serializer.validated_data['username'],
                 password = serializer.validated_data['password']
             )
 
-            if employee:
+            if user:
                 refresh = TokenObtainPairSerializer.get_token(user)
                 data = {
                     'refresh_token': str(refresh),
