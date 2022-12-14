@@ -5,11 +5,16 @@ from rest_framework import generics
 from rest_framework import permissions
 from rest_framework import viewsets
 
+from django.contrib.auth import authenticate
 from django.shortcuts import get_object_or_404
 
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+
 from .serializers import *
 from .models import *
 
@@ -18,7 +23,7 @@ from datetime import datetime
 # Create your views here.
 
 # List all Employees
-class EmployeeList(generics.ListCreateAPIView):
+class EmployeeList(generics.ListAPIView):
     queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer
     # permission_classes = [permissions.IsAuthenticated]
@@ -87,3 +92,58 @@ class ShiftRange(generics.ListAPIView):
 
         queryset = queryset.filter(start_time__range=[start_time, end_time])
         return queryset
+
+
+# Login API
+class LoginAPI(generics.GenericAPIView):
+
+    # Define methods
+    model = Employee
+    serializer_class = LoginSerializer
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            employee = authenticate(
+                request,
+                username = serializer.validated_data['username'],
+                password = serializer.validated_data['password']
+            )
+
+            if employee:
+                refresh = TokenObtainPairSerializer.get_token(user)
+                data = {
+                    'refresh_token': str(refresh),
+                    'access_token': str(refresh.access_token)
+                }
+                return Response(data, status=status.HTTP_200_OK)
+
+            return Response({
+                'error_message': 'Username or password is incorrect!',
+                'error_code': 400
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            'error_messages': serializer.errors,
+            'error_code': 400
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+# Register API
+class RegisterAPI(generics.GenericAPIView):
+    serializer_class = RegisterSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            employee = serializer.save()
+
+            refresh = RefreshToken.for_user(employee)
+
+            response_data = {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

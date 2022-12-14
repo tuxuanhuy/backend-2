@@ -12,7 +12,8 @@ urlpatterns = [
     path('shift/today/', ShiftToday.as_view(), name='shift_today'),
     # path('shift/range/', ShiftRange.as_view(), name='shift_range'),
     path('shift/<int:pk>/', ShiftDetail.as_view(), name='shift_detail'),
-
+    path('login/', LoginAPI.as_view()),
+    path('register/', RegisterAPI.as_view()),
 
 	# path('employee/', views.employee_list, name='employee_list'),
 	# path('employee/<int:pk>/', views.employee_detail, name="employee_detail"),

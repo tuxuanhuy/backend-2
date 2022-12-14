@@ -9,3 +9,4 @@ requests
 
 # Auth Token
 djangorestframework-jwt
+djangorestframework-simplejwt
